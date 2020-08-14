@@ -1,0 +1,192 @@
+start: //Словари
+  remember dictionary = {
+  "en" : {"en" : "English", "ru" : "Английский"},
+  "ru" : {"en" : "Russian", "ru" : "Русский"},
+  "de" : {"en" : "German", "ru" : "Немецкий"},
+  "fr" : {"en" : "French", "ru" : "Французский"},
+  "it" : {"en" : "Italian", "ru" : "Итальянский"},
+  "es" : {"en" : "Spanish", "ru" : "Испанский"},
+  "ok" : {"en" : "Confirm", "ru" : "Подтвердить"},
+  "lselect" : {"en" : "Please choose one or more languages of translation that you may need and then press 'Confirm'",
+    "ru" : "Пожалуйста, выберите один или несколько нужных вам языков перевода и нажмите кнопку 'Подтвердить'"},
+  "completed" : {"en" : "Setting completed!", "ru" : "Настройка завершена!"},
+  "lchange" : {"en" : "To change language settings use '/reset' command",
+    "ru" : "Что бы изменить языки, введите команду '/reset'."},
+  "start" : {"en" : "Now feel free to send me an image/pdf you need to convert into text or\
+  just send me a text to translate. Try it!", "ru" : "Теперь можете просто отправлять мне картинки/pdf файлы, из которых хотите извлечь текст\
+  или текст, который нжно перевести. Попробуйте прямо сейчас!"},
+  "error" : {"en" : "Please, select the languages using buttons and press 'Confirm'. Don't be hurry!",
+  "ru" : "Пожалуйста, выберите языки, используя кнопки. Подтвердите выбор. Не торопитесь!"},
+  "orig" : {"en" : "Original", "ru" : "Оригинал"},
+  "test" : {"en" : "Finish and feedback", "ru" : "Завершить тестирование и оставить отзыв"},
+  "action" : {"en" : "Upload a file or print text", "ru" : "Загрузите файл или введите текст"},
+  "again" : {"en" : "just send me another file or text", "ru" : "Просто отправьте мне еще один файл или текст"}}
+  remember all_langs = {
+  "English" : "en", "Английский" : "en",
+  "Russian" : "ru", "Русский" : "ru",
+  "German" : "de", "Немецкий" : "de",
+  "French" : "fr", "Французский" : "fr",
+  "Italian" : "it", "Итальянский" : "it",
+  "Spanish" : "es", "Испанский" : "es"}
+  remember counter = 0
+  goto check
+
+check: //ПРОВЕРКА НАЛИЧИЯ НАСТРОЕК ПОЛЬЗОВАТЕЛЯ
+  if (setting == true)
+    goto main
+  else goto bot_lang_set
+
+bot_lang_set: //НАСТРОЙКА ПОЛЬЗОВАТЕЛЯ
+  use Button(
+        title = "English", 
+        accept = ["en", "eng", "English"]
+      ) as btn1
+  use Button(
+        title = "Русский", 
+        accept = ["ru", "rus", "Русский", "русский", "рус", "ру", "Russian", "russian"]
+      ) as btn2 
+  say Typing(50)
+  say Question (title="Hi! I'm TextBot! What is your native language? / Привет я Текстбот, на каком языке ты говоришь?",
+    buttons = [btn1, btn2])
+  hold
+  if (event match btn1)
+    remember lang = "en"
+  else if (event match btn2)
+    remember lang = "ru"
+  remember langs = []
+  goto translation_lang_set
+
+translation_lang_set:
+  if (langs.length() == 0)
+  {
+    use Button(title = dictionary["en"][lang]) as btn1
+    use Button(title = dictionary["de"][lang]) as btn2
+    use Button(title = dictionary["fr"][lang]) as btn3
+    use Button(title = dictionary["ru"][lang]) as btn4
+    use Button(title = dictionary["it"][lang]) as btn5
+    use Button(title = dictionary["es"][lang]) as btn6
+    use Button(title = dictionary["ok"][lang], accept = ["ok", "yes", "save"]) as btn7
+    say Question (title = dictionary["lselect"][lang],
+    buttons = [btn1, btn2, btn3, btn4, btn5, btn6, btn7])
+  }
+  hold
+  if (langs.length() == 0 && (event == "Confirm" || event == "Подтвердить"))
+    goto translation_lang_set
+  else if (event match all_langs.keys())
+  {
+      if (all_langs[event] match langs) goto translation_lang_set
+      do langs.push(all_langs[event])
+      goto translation_lang_set
+  }
+  else if ((event == "Confirm" || event == "Подтвердить") && langs.length() != 0)
+  {
+    remember setting = true
+    say dictionary["completed"][lang]
+    goto instructions
+  }
+  else
+  {
+    say dictionary["error"][lang]
+    goto translation_lang_set
+  }
+  
+  
+
+instructions:
+  say dictionary["lchange"][lang]
+  say dictionary["start"][lang]
+  goto main
+
+main:
+/*   say dictionary["action"][lang] */
+  hold
+  do content = event
+  if (content.contains_regex("^?http") == true)
+  {
+    foreach (val, index) in langs
+    {
+      use Button(title = dictionary[val][lang]) as val
+      say Question(title = "", buttons = [val])
+    }
+    use Button(title = dictionary["orig"][lang]) as origin
+    say Question(title = "", buttons = [origin])
+    hold
+    if (event == "/reset")
+      goto bot_lang_set
+    else if (event match all_langs.keys())
+    { 
+      //say "doing"
+      do content = Fn("get_text", url = content)
+      do content = Fn("translate", string = content, lang = all_langs[event])
+    }
+    else if (event match dictionary["orig"][lang])
+      do content = Fn("get_text", url = content)
+    else if (event == "/reset")
+      goto bot_lang_set
+  }
+  else 
+  {
+    if (content match all_langs.keys() || content match dictionary["orig"][lang])
+      goto main
+    foreach (val, index) in langs
+    {
+      use Button(title = dictionary[val][lang]) as val
+      say Question(title = "", buttons = [val])
+    }
+    hold
+    if (content == "/reset")
+      goto bot_lang_set
+    else if (event match all_langs.keys())
+      do content = Fn("translate", string = content, lang = all_langs[event])
+  }
+  say content
+  if (counter == 10)
+  {
+    say Typing(500)
+    say dictionary["again"][lang]
+    use Button(title = dictionary["test"][lang]) as val
+    say Question(title = "Testing purpose/Для тестировщиков:", buttons = [val])
+    hold
+    if (event == "/reset")
+      goto bot_lang_set
+    else if (event match val)
+      goto test
+    else
+      goto main
+  }
+  else
+    say dictionary["again"][lang]
+  do counter = counter + 1
+
+test:
+  do test_dict = {
+    "first" : {"en" : "which format would you like to receive the result?",
+      "ru" : "В каком формате вы бы хотели получать результат?"},
+    "second" : {"en" : "Do you need file conversion as bot functionality?", 
+      "ru" : "Нужна ли вам конвертация файлов как функционал бота?"},
+    "third" : {"en" : "Write what you think about this product without censore. Any wishes/proposes/bug-reports wanted.",
+      "ru" : "Напишите, что вы думаете о продукте, без цензуры. Любые пожелания/предложения/ошибки."},
+    "fourth" : {"en" : "Thanks! If you don't mind to test it again in a future or get update version, leave your contacts please (intra/email/phone number).Or skip it.", 
+      "ru" : "Спасибо! Если вы не против дальнейшего тестирования или получить обновленную версию, оставьте свои контакты (intra/e-mail/телефон). Или пропустите шаг."},
+    "five" : {"en" : "Feel free to use our chatbot!",
+      "ru" : "Вы можете вернуться к обычному использованию бота"}
+  }
+  do result = []
+  say test_dict["first"][lang]
+  hold
+  do result.push(event)
+  say test_dict["second"][lang]
+  hold
+  do result.push(event)
+  say test_dict["third"][lang]
+  hold
+  do result.push(event)
+  use Button(title = "skip") as skip
+  say Question(title = test_dict["fourth"][lang], buttons = [skip])
+  hold
+  do result.push(event)
+  say test_dict["five"][lang]
+  remember tested = 1
+  //do url = HTTP("https://hooks.slack.com/")// Here should be your slack or other webhook link to collect feedback
+  //do url.post({"text": "{{result[0]}}, {{result[1]}}, {{result[2]}}, {{result[3]}}"}).send()
+  goto main
