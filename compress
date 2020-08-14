@@ -19,6 +19,7 @@ cd ..
 zip -g ../translate.zip index.py
 cd ..
 zip -g translate.zip .env
+rm -rf gettext_env/package translate_env/package
 
 echo -e "\e[32mCompressed files ready to upload : 
 ${PWD}/get_text.zip
