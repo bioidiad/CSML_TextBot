@@ -1,0 +1,26 @@
+#!/bin/bash
+cd gettext_env
+touch .env && echo 'KEY=' > .env
+source bin/activate && pip install --target ./package -r requirements.txt
+deactivate
+cd package
+zip -r9 ../../get_text.zip .
+cd ..
+zip -g ../get_text.zip index.py 
+cd ..
+zip -g get_text.zip .env
+cd translate_env
+touch .env && echo 'KEY=' > .env
+source bin/activate && pip install --target ./package -r requirements.txt
+deactivate
+cd package
+zip -r9 ../../translate.zip .
+cd ..
+zip -g ../translate.zip index.py
+cd ..
+zip -g translate.zip .env
+
+echo -e "\e[32mCompressed files ready to upload : 
+${PWD}/get_text.zip
+${PWD}/translate.zip"
+echo -e "\e[93mADD your API KEY value to .env file in both archives"
