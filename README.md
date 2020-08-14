@@ -3,6 +3,7 @@ The source code for my chat-bot that convert image to text and also able to tran
 
 CSML Текстбот - чат-бот для распознавания и перевода текста с картинок и документов, а так же простого перевода текста.
 Позволяет избежать перепечатывания текста или понять что написано на фотографии. Легко встраивается в самые популярные мессенджеры.
+Посмотреть как это работает можно тут https://chat.csml.dev/channels/0kv4xowrzaykaccw3qbqiosicmok4r3l
 
 Проект написан на языке CSML и python (back-end)
 CSML - Conversational Standard Meta Language, это опенсорсный язык программирования, созданный специально для чат-ботов компанией Clevy.
